@@ -1,26 +1,15 @@
 # OrgLens
 
-Independent portfolio prototype designed & developed by Phoebe Wang (2026).
+Independent organizational-effectiveness and workforce-planning portfolio prototype by Phoebe Wang (2026).
 
-OrgLens demonstrates an organizational-effectiveness and workforce-planning workflow using fully synthetic data. No World Bank Group or IFC employee data are used.
+## What this version demonstrates
+- Synthetic workforce roster with hierarchy, appointment type, grade, location, skills, FTE and modeled workforce cost
+- IFC-informed but fictional organizational units based only on public information
+- Span-of-control and organizational-structure diagnostics
+- Workforce capacity, appointment mix, seniority, affordability and modeled business-demand analysis
+- Skill supply-versus-modeled-requirement analysis and illustrative job architecture
+- Organizational-design scenario analysis
+- Data validation and source-to-insight workflow
+- Audience-specific management briefs with responsible-AI guardrails
 
-## Run
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-## No-code data updates
-
-The durable demo inputs are in `data/`:
-- `workforce.csv`
-- `business_metrics.csv`
-- `skill_demand.csv`
-- `job_architecture.csv`
-
-Edit a CSV in Excel, preserve the column names, and replace that file in GitHub. Streamlit will reload the repository and recalculate the app.
-
-## Responsible use
-
-Metrics are diagnostic signals for human review, not automated employment recommendations. Workload and skill-demand measures are fictional demonstration proxies.
+All people, reporting lines, metrics and organizational data are fictional. No World Bank Group or IFC employee data are used.
