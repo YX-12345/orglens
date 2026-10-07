@@ -1,4 +1,4 @@
-# OrgLens V2
+# OrgLens
 
 Independent portfolio prototype designed & developed by Phoebe Wang (2026).
 
