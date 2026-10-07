@@ -78,7 +78,6 @@ if page=='Executive Overview':
         for _,r in checks.iterrows(): st.write(f"{'✓' if r.Records==0 else '⚠'} **{r.Check}** — {r.Records}")
         st.caption('Structural findings should not be interpreted until obvious hierarchy and classification issues are understood.')
     st.subheader('Where is workforce capacity located?'); loc=workforce.groupby('location').fte.sum().sort_values(ascending=False).reset_index(); fig=px.bar(loc,x='location',y='fte',labels={'location':'Location','fte':'Full-Time Equivalents (FTE)'}); fig.update_layout(height=300,margin=dict(l=10,r=10,t=10,b=10)); st.plotly_chart(fig,use_container_width=True)
-    st.subheader('Appointment mix'); appt=workforce.groupby('appointment_type').agg(Records=('employee_id','count'),FTE=('fte','sum')).reset_index(); fig=px.bar(appt,x='appointment_type',y='FTE',text='Records',labels={'appointment_type':'Appointment type','FTE':'Full-Time Equivalents (FTE)'}); fig.update_traces(marker_line_width=0); fig.update_layout(height=300,margin=dict(l=10,r=10,t=10,b=10),bargap=.28); st.plotly_chart(fig,use_container_width=True); st.caption('Synthetic appointment mix. Open/Term, ETC and ETT records are modeled as full-time capacity; STC records are modeled as fractional capacity for demonstration. Appointment type and FTE are separate concepts.')
 
 elif page=='Analyze a Business Unit':
     st.header('Analyze a business unit'); st.write('Move from an organization-wide signal to a **business-context diagnostic**. Metrics identify questions for review; they do not determine organizational quality.')
@@ -108,6 +107,30 @@ elif page=='Workforce Alignment':
         grade=f[f.role_type.eq('Staff')].groupby('grade').fte.sum().reindex(GRADES).fillna(0).reset_index(); fig=px.bar(grade,x='grade',y='fte',title='Seniority / grade mix',labels={'grade':'Illustrative grade','fte':'Full-Time Equivalents (FTE)'}); fig.update_layout(height=330,margin=dict(l=10,r=10,t=45,b=10)); st.plotly_chart(fig,use_container_width=True)
     with b:
         comp=f.groupby('job_family').fte.sum().reset_index(); fig=px.bar(comp,x='job_family',y='fte',title='Job-family composition',labels={'job_family':'Job family','fte':'Full-Time Equivalents (FTE)'}); fig.update_layout(height=330,margin=dict(l=10,r=10,t=45,b=10)); st.plotly_chart(fig,use_container_width=True)
+    st.subheader('Appointment composition')
+    st.caption('Synthetic staffing categories, shown as headcount and full-time-equivalent (FTE) capacity. Filter using the business-unit selector above.')
+    appt=(f.groupby('appointment_type',dropna=False)
+          .agg(People=('employee_id','count'),FTE=('fte','sum'))
+          .reset_index().rename(columns={'appointment_type':'Appointment type'}))
+    appt['Share of FTE']=appt['FTE']/appt['FTE'].sum() if appt['FTE'].sum() else 0
+    order=['Open / Term Staff','ETC','ETT','STC']
+    appt['Appointment type']=pd.Categorical(appt['Appointment type'],categories=order,ordered=True)
+    appt=appt.sort_values('Appointment type').dropna(subset=['Appointment type'])
+    if not appt.empty:
+        fig=px.bar(appt.assign(Group='Workforce'),x='Share of FTE',y='Group',color='Appointment type',orientation='h',
+                   category_orders={'Appointment type':order},text=appt['Share of FTE'].map(lambda v:f'{v:.0%}'))
+        fig.update_layout(barmode='stack',height=160,margin=dict(l=10,r=10,t=10,b=5),
+                          xaxis=dict(tickformat='.0%',range=[0,1]),yaxis_title='',legend_title_text='Appointment type')
+        fig.update_traces(textposition='inside')
+        st.plotly_chart(fig,use_container_width=True)
+        appt_display=appt.copy();appt_display['Appointment type']=appt_display['Appointment type'].astype(str)
+        st.dataframe(appt_display,use_container_width=True,hide_index=True,
+            column_config={'FTE':st.column_config.NumberColumn('FTE',format='%.1f'),
+                           'Share of FTE':st.column_config.NumberColumn('Share of FTE',format='percent')})
+    else:
+        st.warning('Appointment types are not classified in the uploaded workforce data. Please update data/workforce.csv.')
+    st.caption('STC capacity is illustrative and fractional; appointment category does not itself determine FTE. All records are fictional.')
+
     cost=workforce.groupby('department').agg(FTE=('fte','sum'),Workforce_Cost=('annual_cost','sum')).join(business.set_index('department'),how='inner').reset_index(); cost['Demand change']=cost.workload_index/cost.prior_workload_index-1; cost['Budget utilization']=cost.Workforce_Cost/cost.budget
     display=cost[['department','FTE','Workforce_Cost','budget','workload_index','Demand change','Budget utilization']].copy(); display['Workforce_Cost']=display.Workforce_Cost.map(lambda x:f'${x:,.0f}'); display['budget']=display.budget.map(lambda x:f'${x:,.0f}'); display['workload_index']=display.workload_index.map(lambda x:f'{x:,.0f}'); display['Demand change']=display['Demand change'].map(lambda x:f'{x:+.1%}'); display['Budget utilization']=display['Budget utilization'].map(lambda x:f'{x:.0%}')
     st.subheader('Capacity, affordability and modeled business demand'); st.dataframe(display,use_container_width=True,hide_index=True,column_config={'department':'Organizational unit','FTE':st.column_config.NumberColumn('FTE',format='%.1f'),'Workforce_Cost':'Workforce cost (USD)','budget':'Modeled workforce budget (USD)','workload_index':'Modeled demand units','Demand change':'Demand change','Budget utilization':'Budget utilization'}); st.info('Modeled demand is a synthetic proxy used to demonstrate workforce-planning analysis—not a productivity score. In a real assessment, the demand measure would be defined with the business and could reflect transactions, projects, clients, deliverables or another relevant workload driver.')
