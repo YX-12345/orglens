@@ -55,6 +55,10 @@ def unit_summary(df,metrics,dept):
 def fmt_money(x): return f'${x/1e6:.2f}M' if x>=1e6 else f'${x:,.0f}'
 
 workforce,business,skill_demand,architecture=load_defaults()
+# Keep the demo functional when the app code is updated before the CSV files.
+if 'appointment_type' not in workforce.columns:
+    workforce['appointment_type'] = 'Not classified (update workforce.csv)'
+    st.warning('The workforce.csv file is from an earlier version and has no appointment_type column. Upload the updated data/workforce.csv to enable the appointment-mix breakdown.')
 # Optional no-code session refresh. Files are not persisted; GitHub data files remain the durable source.
 st.sidebar.markdown('### ◈ OrgLens'); st.sidebar.caption('Organizational Effectiveness & Workforce Intelligence')
 page=st.sidebar.radio('Navigate',['Executive Overview','Analyze a Business Unit','Organizational Effectiveness','Workforce Alignment','Skills & Job Architecture','Scenario Lab','Data & Refresh','Management Brief','Methodology & Glossary'])
